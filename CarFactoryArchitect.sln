@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156 d17.13
+VisualStudioVersion = 17.13.35825.156
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarFactoryArchitect", "CarFactoryArchitect\CarFactoryArchitect.csproj", "{31BE7CFC-389C-4EE3-8F50-0334E84AE910}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoGameLibrary", "MonoGameLibrary\MonoGameLibrary.csproj", "{E3C12215-7C80-448C-9CA6-D6BA6F3A9C39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{31BE7CFC-389C-4EE3-8F50-0334E84AE910}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31BE7CFC-389C-4EE3-8F50-0334E84AE910}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31BE7CFC-389C-4EE3-8F50-0334E84AE910}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3C12215-7C80-448C-9CA6-D6BA6F3A9C39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3C12215-7C80-448C-9CA6-D6BA6F3A9C39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3C12215-7C80-448C-9CA6-D6BA6F3A9C39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3C12215-7C80-448C-9CA6-D6BA6F3A9C39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
