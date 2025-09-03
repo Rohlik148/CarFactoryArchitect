@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas>
+	<Texture>textures/my-atlas</Texture>
+	<Regions>
+		<!--Conveyor facing up-->
+		<Region name="conv-up-1" x="0" y="0" width="16" height="16" />
+		<Region name="conv-up-2" x="0" y="16" width="16" height="16" />
+		<Region name="conv-up-3" x="0" y="32" width="16" height="16" />
+		<Region name="conv-up-4" x="0" y="48" width="16" height="16" />
+		<!--Conveyor facing right-->
+		<Region name="conv-right-1" x="16" y="0" width="16" height="16" />
+		<Region name="conv-right-2" x="16" y="16" width="16" height="16" />
+		<Region name="conv-right-3" x="16" y="32" width="16" height="16" />
+		<Region name="conv-right-4" x="16" y="48" width="16" height="16" />
+		<!--Conveyor facing down-->
+		<Region name="conv-down-1" x="32" y="0" width="16" height="16" />
+		<Region name="conv-down-2" x="32" y="16" width="16" height="16" />
+		<Region name="conv-down-3" x="32" y="32" width="16" height="16" />
+		<Region name="conv-down-4" x="32" y="48" width="16" height="16" />
+		<!--Conveyor facing left-->
+		<Region name="conv-left-1" x="48" y="0" width="16" height="16" />
+		<Region name="conv-left-2" x="48" y="16" width="16" height="16" />
+		<Region name="conv-left-3" x="48" y="32" width="16" height="16" />
+		<Region name="conv-left-4" x="48" y="48" width="16" height="16" />
+	</Regions>
+	<Animations>
+		<!--Animation for conveyor facing up-->
+		<Animation name="conveyor-animation-up" delay="200">
+			<Frame region="conv-up-1" />
+			<Frame region="conv-up-2" />
+			<Frame region="conv-up-3" />
+			<Frame region="conv-up-4" />
+		</Animation>
+		<!--Animation for conveyor facing right-->
+		<Animation name="conveyor-animation-right" delay="200">
+			<Frame region="conv-right-1" />
+			<Frame region="conv-right-2" />
+			<Frame region="conv-right-3" />
+			<Frame region="conv-right-4" />
+		</Animation>
+		<!--Animation for conveyor facing down-->
+		<Animation name="conveyor-animation-down" delay="200">
+			<Frame region="conv-down-1" />
+			<Frame region="conv-down-2" />
+			<Frame region="conv-down-3" />
+			<Frame region="conv-down-4" />
+		</Animation>
+		<!--Animation for conveyor facing left-->
+		<Animation name="conveyor-animation-left" delay="200">
+			<Frame region="conv-left-1" />
+			<Frame region="conv-left-2" />
+			<Frame region="conv-left-3" />
+			<Frame region="conv-left-4" />
+		</Animation>
+	</Animations>
+</TextureAtlas>
+
