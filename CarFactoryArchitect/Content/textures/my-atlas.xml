@@ -22,6 +22,61 @@
 		<Region name="conv-left-2" x="48" y="16" width="16" height="16" />
 		<Region name="conv-left-3" x="48" y="32" width="16" height="16" />
 		<Region name="conv-left-4" x="48" y="48" width="16" height="16" />
+
+		<!--Smelter-->
+		<Region name="smelter-up" x="64" y="0" width="16" height="16" />
+		<Region name="smelter-right" x="64" y="16" width="16" height="16" />
+		<Region name="smelter-down" x="64" y="32" width="16" height="16" />
+		<Region name="smelter-left" x="64" y="48" width="16" height="16" />
+		
+		<!--Forge-->
+		<Region name="forge-up" x="80" y="0" width="16" height="16" />
+		<Region name="forge-right" x="80" y="16" width="16" height="16" />
+		<Region name="forge-down" x="80" y="32" width="16" height="16" />
+		<Region name="forge-left" x="80" y="48" width="16" height="16" />
+
+		<!--Cutter-->
+		<Region name="cutter-up" x="96" y="0" width="16" height="16" />
+		<Region name="cutter-right" x="96" y="16" width="16" height="16" />
+		<Region name="cutter-down" x="96" y="32" width="16" height="16" />
+		<Region name="cutter-left" x="96" y="48" width="16" height="16" />
+
+		<!--Assembler-->
+		<Region name="assembler-up" x="112" y="0" width="16" height="16" />
+		<Region name="assembler-right" x="112" y="16" width="16" height="16" />
+		<Region name="assembler-down" x="112" y="32" width="16" height="16" />
+		<Region name="assembler-left" x="112" y="48" width="16" height="16" />
+
+		<!--Extactor-->
+		<Region name="extractor-up" x="128" y="0" width="16" height="16" />
+		<Region name="extractor-right" x="128" y="16" width="16" height="16" />
+		<Region name="extractor-down" x="128" y="32" width="16" height="16" />
+		<Region name="extractor-left" x="128" y="48" width="16" height="16" />
+
+		<!--Seller-->
+		<Region name="seller" x="144" y="0" width="16" height="16" />
+
+		<!--Iron Ore-->
+		<Region name="iron-tile" x="0" y="64" width="16" height="16" />
+		<Region name="iron-raw" x="0" y="80" width="16" height="16" />
+		<Region name="iron-smelted" x="0" y="96" width="16" height="16" />
+		<Region name="iron-plate" x="0" y="112" width="16" height="16" />
+		
+		<!--Sand Ore-->
+		<Region name="sand-tile" x="16" y="64" width="16" height="16" />
+		<Region name="sand-smelted" x="16" y="80" width="16" height="16" />
+		<Region name="glass" x="16" y="96" width="16" height="16" />
+
+		<!--Copper Ore-->
+		<Region name="copper-tile" x="32" y="64" width="16" height="16" />
+		<Region name="copper-raw" x="32" y="80" width="16" height="16" />
+		<Region name="copper-smelted" x="32" y="96" width="16" height="16" />
+		<Region name="copper-wire" x="32" y="112" width="16" height="16" />
+
+		<!--Rubber-->
+		<Region name="rubber-tile" x="48" y="64" width="16" height="16" />
+		<Region name="rubber-raw" x="48" y="80" width="16" height="16" />
+
 	</Regions>
 	<Animations>
 		<!--Animation for conveyor facing up-->
