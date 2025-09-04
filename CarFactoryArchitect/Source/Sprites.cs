@@ -36,7 +36,8 @@ public enum MachineType
     Forge,
     Cutter,
     Assembler,
-    Extractor
+    Extractor,
+    Seller
 }
 public class Conveyor
 {
@@ -88,6 +89,7 @@ public class Machine
             MachineType.Cutter => "cutter",
             MachineType.Assembler => "assembler",
             MachineType.Extractor => "extractor",
+            MachineType.Seller => "seller",
             _ => "smelter"
         };
 
@@ -100,8 +102,27 @@ public class Machine
             _ => "-up"
         };
 
-        MachineSprite = atlas.CreateSprite(baseName + directionSuffix);
+        string spriteName = machineType == MachineType.Seller ? baseName : baseName + GetDirectionSuffix(direction);
+
+        MachineSprite = atlas.CreateSprite(spriteName);
         MachineSprite.Scale = new Vector2(scale, scale);
+    }
+
+    private string GetDirectionSuffix(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Up => "-up",
+            Direction.Right => "-right",
+            Direction.Down => "-down",
+            Direction.Left => "-left",
+            _ => "-up"
+        };
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Vector2 position)
+    {
+        MachineSprite?.Draw(spriteBatch, position);
     }
 }
 

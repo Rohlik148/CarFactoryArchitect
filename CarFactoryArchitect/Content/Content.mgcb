@@ -13,6 +13,9 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin maps/level1.txt
+/copy:maps/level1.txt
+
 #begin textures/my-atlas.png
 /importer:TextureImporter
 /processor:TextureProcessor

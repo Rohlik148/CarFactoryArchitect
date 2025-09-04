@@ -12,6 +12,7 @@ namespace CarFactoryArchitect.Source
     {
         // Tile storage
         private Dictionary<Point, object> _tiles;
+        private Dictionary<Point, Ore> _underlyingOres;
 
         // Camera properties
         public Vector2 CameraPosition { get; set; }
@@ -35,7 +36,17 @@ namespace CarFactoryArchitect.Source
         public World()
         {
             _tiles = new Dictionary<Point, object>();
-            CameraPosition = Vector2.Zero;
+            _underlyingOres = new Dictionary<Point, Ore>();
+
+        float worldWidth = GridSize * TileSize;
+            float worldHeight = GridSize * TileSize;
+            float screenWidth = Core.Graphics.PreferredBackBufferWidth;
+            float screenHeight = Core.Graphics.PreferredBackBufferHeight;
+
+            CameraPosition = new Vector2(
+                (worldWidth - screenWidth) / 2,
+                (worldHeight - screenHeight) / 2
+            );
         }
 
         public void Initialize(GraphicsDevice graphicsDevice)
@@ -81,17 +92,35 @@ namespace CarFactoryArchitect.Source
         // Place tiles in the world
         public void PlaceTile(int x, int y, object tile)
         {
-            if (IsInBounds(x, y))
+            if (!IsInBounds(x, y)) return;
+
+            Point point = new Point(x, y);
+            var existingTile = GetTile(x, y);
+
+            // If there's an ore tile, store it as underlying ore
+            if (existingTile is Ore ore)
             {
-                _tiles[new Point(x, y)] = tile;
+                _underlyingOres[point] = ore;
             }
+
+            // Place the new tile
+            _tiles[point] = tile;
         }
 
         public void RemoveTile(int x, int y)
         {
-            if (IsInBounds(x, y))
+            if (!IsInBounds(x, y)) return;
+
+            Point point = new Point(x, y);
+
+            // Remove the current tile
+            _tiles.Remove(point);
+
+            // If there's an underlying ore, restore it
+            if (_underlyingOres.TryGetValue(point, out Ore underlyingOre))
             {
-                _tiles.Remove(new Point(x, y));
+                _tiles[point] = underlyingOre;
+                _underlyingOres.Remove(point);
             }
         }
 
@@ -103,6 +132,11 @@ namespace CarFactoryArchitect.Source
                 return tile;
             }
             return null;
+        }
+
+        public bool HasUnderlyingOre(int x, int y)
+        {
+            return _underlyingOres.ContainsKey(new Point(x, y));
         }
 
         // Convert screen position to world grid coordinates

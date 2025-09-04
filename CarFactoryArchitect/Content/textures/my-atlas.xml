@@ -95,10 +95,10 @@
 		</Animation>
 		<!--Animation for conveyor facing down-->
 		<Animation name="conveyor-animation-down" delay="200">
-			<Frame region="conv-down-1" />
-			<Frame region="conv-down-2" />
-			<Frame region="conv-down-3" />
 			<Frame region="conv-down-4" />
+			<Frame region="conv-down-3" />
+			<Frame region="conv-down-2" />
+			<Frame region="conv-down-1" />
 		</Animation>
 		<!--Animation for conveyor facing left-->
 		<Animation name="conveyor-animation-left" delay="200">

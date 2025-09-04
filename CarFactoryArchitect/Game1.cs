@@ -22,7 +22,7 @@ public class Game1 : Core
 
     private const Single SizeScale = 3.0f;
 
-    public Game1() : base("Car Factory Architect", 1920, 1080, false)
+    public Game1() : base("Car Factory Architect", 1280, 720, false)
     {
 
     }
@@ -39,8 +39,10 @@ public class Game1 : Core
         _world = new World();
         _world.Initialize(GraphicsDevice);
 
-        _ui = new UI(_atlas, SizeScale);
+        _ui = new UI(_atlas, _world, SizeScale);
         _ui.Initialize(GraphicsDevice);
+
+        MapLoader.LoadMap("level1.txt", _world, _atlas, SizeScale);
     }
 
     protected override void Update(GameTime gameTime)
@@ -58,7 +60,10 @@ public class Game1 : Core
             {
                 // Check if the tile is already occupied
                 var existingTile = _world.GetTile(gridPos.X, gridPos.Y);
-                if (existingTile == null)
+                System.Diagnostics.Debug.WriteLine($"Existing tile: {existingTile?.GetType().Name}");
+
+                // Allow placement if tile is empty OR if it's an ore (which can be built on)
+                if (existingTile == null || existingTile is Ore)
                 {
                     // Place tile based on UI selection
                     switch (_ui.CurrentBuildMode)
@@ -68,6 +73,7 @@ public class Game1 : Core
                             _world.PlaceConveyor(gridPos.X, gridPos.Y, conveyor);
                             break;
                         case BuildMode.Machine:
+                            var structure = _ui.CreateSelectedMachine();
                             var machine = _ui.CreateSelectedMachine();
                             _world.PlaceMachine(gridPos.X, gridPos.Y, machine);
                             break;

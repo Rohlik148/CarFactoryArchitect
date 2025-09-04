@@ -19,11 +19,13 @@ namespace CarFactoryArchitect.Source
         // UI textures
         private Texture2D _pixelTexture;
         private TextureAtlas _atlas;
+        private World _world;
         private bool _isInitialized = false;
 
         // UI state
         public BuildMode CurrentBuildMode { get; private set; } = BuildMode.Conveyor;
         public Direction ConveyorDirection { get; private set; } = Direction.Up;
+        public Direction MachineDirection { get; private set; } = Direction.Up;
         public MachineType SelectedMachineType { get; private set; } = MachineType.Smelter;
         public int SelectedMachineIndex { get; private set; } = 0;
 
@@ -44,14 +46,16 @@ namespace CarFactoryArchitect.Source
             MachineType.Forge,
             MachineType.Cutter,
             MachineType.Assembler,
-            MachineType.Extractor
+            MachineType.Extractor,
+            MachineType.Seller
         };
 
-        private float _scale;
+        private Single _scale;
 
-        public UI(TextureAtlas atlas, float scale = 1.0f)
+        public UI(TextureAtlas atlas, World world, Single scale = 1.0f)
         {
             _atlas = atlas;
+            _world = world;
             _scale = scale;
         }
 
@@ -120,15 +124,41 @@ namespace CarFactoryArchitect.Source
                         RotateConveyorDirection();
                         break;
                     case BuildMode.Machine:
-                        CycleMachineType();
+                        if (SelectedMachineType != MachineType.Seller)
+                        {
+                            RotateMachineDirection();
+                        }
                         break;
                 }
+            }
+
+            if (input.Keyboard.WasKeyJustPressed(Keys.T) && CurrentBuildMode == BuildMode.Machine)
+            {
+                CycleMachineType();
+            }
+
+            if (input.Keyboard.WasKeyJustPressed(Keys.F1))
+            {
+                // Clear current world and load new map
+                // You'd need to add a method to clear the world first
+                MapLoader.LoadMap("level1.txt", _world, _atlas, _scale);
+            }
+
+            if (input.Keyboard.WasKeyJustPressed(Keys.F5))
+            {
+                // Save current map
+                MapLoader.SaveMap("saved_map.txt", _world);
             }
         }
 
         private void RotateConveyorDirection()
         {
             ConveyorDirection = (Direction)(((int)ConveyorDirection + 1) % 4);
+        }
+
+        private void RotateMachineDirection()
+        {
+            MachineDirection = (Direction)(((int)MachineDirection + 1) % 4);
         }
 
         private void CycleMachineType()
@@ -217,7 +247,7 @@ namespace CarFactoryArchitect.Source
             // Draw current machine sprite
             try
             {
-                var machine = new Machine(SelectedMachineType, Direction.Up, _atlas, _scale * 0.8f);
+                var machine = new Machine(SelectedMachineType, MachineDirection, _atlas, _scale * 0.8f);
 
                 Vector2 spritePos = new Vector2(
                     x + IndicatorSize / 2 - machine.MachineSprite.Width / 2,
@@ -264,12 +294,7 @@ namespace CarFactoryArchitect.Source
 
         public Machine CreateSelectedMachine()
         {
-            return new Machine(SelectedMachineType, Direction.Up, _atlas, _scale);
-        }
-
-        public Ore CreateSelectedOre()
-        {
-            return new Ore(OreType.Iron, OreState.Raw, _atlas, _scale);
+            return new Machine(SelectedMachineType, MachineDirection, _atlas, _scale);
         }
     }
 }
