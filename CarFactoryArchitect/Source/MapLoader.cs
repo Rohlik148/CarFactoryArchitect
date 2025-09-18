@@ -1,7 +1,5 @@
 ﻿using System;
 using System.IO;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework;
 using MonoGameLibrary.Graphics;
 
 namespace CarFactoryArchitect.Source
@@ -21,7 +19,6 @@ namespace CarFactoryArchitect.Source
         {
             try
             {
-                // Read the map file from Content folder
                 string filePath = Path.Combine("Content/maps", mapFileName);
                 string[] lines = File.ReadAllLines(filePath);
 
@@ -32,7 +29,6 @@ namespace CarFactoryArchitect.Source
                     string line = lines[y].Trim();
                     if (string.IsNullOrEmpty(line)) continue;
 
-                    // Split by comma or space
                     string[] values = line.Split(new char[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                     for (int x = 0; x < values.Length; x++)
@@ -43,8 +39,6 @@ namespace CarFactoryArchitect.Source
                         }
                     }
                 }
-
-                Console.WriteLine("Map loaded successfully");
             }
             catch (Exception ex)
             {

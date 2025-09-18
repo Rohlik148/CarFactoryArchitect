@@ -18,8 +18,6 @@ public class Game1 : Core
     private UI _ui;
     private TextureAtlas _atlas;
 
-    private Machine _ma;
-
     private const Single SizeScale = 3.0f;
 
     public Game1() : base("Car Factory Architect", 1280, 720, false)
@@ -36,7 +34,7 @@ public class Game1 : Core
     {
         _atlas = TextureAtlas.FromFile(Content, "textures/my-atlas.xml");
 
-        _world = new World();
+        _world = new World(_atlas, SizeScale);
         _world.Initialize(GraphicsDevice);
 
         _ui = new UI(_atlas, _world, SizeScale);

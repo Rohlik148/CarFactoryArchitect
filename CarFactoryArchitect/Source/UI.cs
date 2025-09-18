@@ -78,7 +78,6 @@ namespace CarFactoryArchitect.Source
                 // Create a 1x1 white pixel texture for drawing UI elements
                 _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
                 _pixelTexture.SetData(new[] { Color.White });
-                Console.WriteLine("UI pixel texture created successfully");
             }
             catch (Exception ex)
             {
@@ -87,7 +86,7 @@ namespace CarFactoryArchitect.Source
             }
         }
 
-        // Lazy initialization - create texture when first needed
+        // Create texture when first needed
         private void EnsurePixelTexture()
         {
             if (_pixelTexture == null && !_isInitialized && Core.GraphicsDevice != null)
@@ -115,7 +114,7 @@ namespace CarFactoryArchitect.Source
                 CurrentBuildMode = BuildMode.Machine;
             }
 
-            // Handle rotation/cycling with R key
+            // Handle rotation with R key
             if (input.Keyboard.WasKeyJustPressed(Keys.R))
             {
                 switch (CurrentBuildMode)
@@ -132,18 +131,20 @@ namespace CarFactoryArchitect.Source
                 }
             }
 
+            // Handle cycling machine types with T key
             if (input.Keyboard.WasKeyJustPressed(Keys.T) && CurrentBuildMode == BuildMode.Machine)
             {
                 CycleMachineType();
             }
 
+            // WIP
             if (input.Keyboard.WasKeyJustPressed(Keys.F1))
             {
                 // Clear current world and load new map
-                // You'd need to add a method to clear the world first
                 MapLoader.LoadMap("level1.txt", _world, _atlas, _scale);
             }
 
+            // WIP
             if (input.Keyboard.WasKeyJustPressed(Keys.F5))
             {
                 // Save current map

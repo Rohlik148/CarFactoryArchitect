@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -13,6 +14,16 @@ namespace CarFactoryArchitect.Source
         // Tile storage
         private Dictionary<Point, object> _tiles;
         private Dictionary<Point, Ore> _underlyingOres;
+
+        // Conveyors
+        private Dictionary<Point, Ore> _itemsOnConveyors;
+        private Dictionary<Point, Queue<Ore>> _conveyorInputQueues;
+        private const int MaxQueueSize = 0;
+        private ConveyorSystem _conveyorSystem;
+
+        // General
+        private TextureAtlas _atlas;
+        private float _scale;
 
         // Camera properties
         public Vector2 CameraPosition { get; set; }
@@ -33,12 +44,18 @@ namespace CarFactoryArchitect.Source
         private const float MaxZoom = 3.0f;
         private const float ZoomSpeed = 0.2f;
 
-        public World()
+        public World(TextureAtlas atlas, float scale)
         {
+            _atlas = atlas;
+            _scale = scale;
+
             _tiles = new Dictionary<Point, object>();
             _underlyingOres = new Dictionary<Point, Ore>();
+            _itemsOnConveyors = new Dictionary<Point, Ore>();
+            _conveyorInputQueues = new Dictionary<Point, Queue<Ore>>(); // Queue for waiting items
+            _conveyorSystem = new ConveyorSystem(this);
 
-        float worldWidth = GridSize * TileSize;
+            float worldWidth = GridSize * TileSize;
             float worldHeight = GridSize * TileSize;
             float screenWidth = Core.Graphics.PreferredBackBufferWidth;
             float screenHeight = Core.Graphics.PreferredBackBufferHeight;
@@ -112,6 +129,19 @@ namespace CarFactoryArchitect.Source
             if (!IsInBounds(x, y)) return;
 
             Point point = new Point(x, y);
+            var existingTile = GetTile(x, y);
+
+            // Prevent deletion of ore tiles
+            if (existingTile is Ore ore && ore.State == OreState.Tile)
+            {
+                return;
+            }
+
+            // If removing a conveyor, clean up all associated items and queues
+            if (existingTile is Conveyor)
+            {
+                CleanupConveyorData(x, y);
+            }
 
             // Remove the current tile
             _tiles.Remove(point);
@@ -122,6 +152,19 @@ namespace CarFactoryArchitect.Source
                 _tiles[point] = underlyingOre;
                 _underlyingOres.Remove(point);
             }
+        }
+
+        private void CleanupConveyorData(int x, int y)
+        {
+            var point = new Point(x, y);
+
+            // Remove any item currently on the conveyor
+            _itemsOnConveyors.Remove(point);
+
+            // Remove any queued items for this conveyor
+            _conveyorInputQueues.Remove(point);
+
+            // System.Diagnostics.Debug.WriteLine($"Cleaned up conveyor data at ({x}, {y})");
         }
 
         public object GetTile(int x, int y)
@@ -165,6 +208,309 @@ namespace CarFactoryArchitect.Source
         {
             HandleInput(gameTime);
             UpdateAnimatedTiles(gameTime);
+            ProcessAllConveyorQueues();
+            _conveyorSystem.Update(gameTime);
+        }
+
+        private void ProcessAllConveyorQueues()
+        {
+            // Process all conveyor queues to move items from queue to conveyor
+            var pointsToProcess = _conveyorInputQueues.Keys.ToList();
+            foreach (var point in pointsToProcess)
+            {
+                ProcessConveyorQueue(point.X, point.Y);
+            }
+        }
+
+        public Ore GetItemOnConveyor(int x, int y)
+        {
+            _itemsOnConveyors.TryGetValue(new Point(x, y), out Ore item);
+            return item;
+        }
+
+        public bool HasSpaceOnConveyor(int x, int y)
+        {
+            // Conveyor has space if there is no item currently on it
+            return GetItemOnConveyor(x, y) == null;
+        }
+
+        public bool HasSpaceInQueue(int x, int y)
+        {
+            if (MaxQueueSize == 0)
+            {
+                return false;
+            }
+
+            // If Queue exists
+            var point = new Point(x, y);
+            if (_conveyorInputQueues.TryGetValue(point, out Queue<Ore> queue))
+            {
+                return queue.Count < MaxQueueSize;
+            }
+            return true;
+        }
+
+        public bool TryPlaceItemOnConveyor(int x, int y, Ore item)
+        {
+            var point = new Point(x, y);
+
+            var tile = GetTile(x, y);
+            if (!(tile is Conveyor))
+            {
+                return false;
+            }
+
+            // Check if conveyor is completely empty
+            if (HasSpaceOnConveyor(x, y))
+            {
+                // Double-check before placing to prevent race conditions
+                if (_itemsOnConveyors.ContainsKey(point))
+                {
+                    return false;
+                }
+
+                _itemsOnConveyors[point] = item;
+                // System.Diagnostics.Debug.WriteLine($"Placed {item.Type} {item.State} on conveyor at ({x}, {y})");
+                return true;
+            }
+
+            // If MaxQueueSize is 0, don't allow queuing at all
+            if (MaxQueueSize == 0)
+            {
+                return false;
+            }
+
+            // If conveyor is occupied, try to add to queue
+            if (HasSpaceInQueue(x, y))
+            {
+                if (!_conveyorInputQueues.ContainsKey(point))
+                {
+                    _conveyorInputQueues[point] = new Queue<Ore>();
+                }
+                _conveyorInputQueues[point].Enqueue(item);
+                // System.Diagnostics.Debug.WriteLine($"Queued {item.Type} {item.State} for conveyor at ({x}, {y})");
+                return true;
+            }
+
+            return false;
+        }
+
+        public void PlaceItemOnConveyor(int x, int y, Ore item)
+        {
+            TryPlaceItemOnConveyor(x, y, item);
+        }
+
+        public Ore RemoveItemFromConveyor(int x, int y)
+        {
+            var point = new Point(x, y);
+
+            // Remove the item currently on the conveyor
+            _itemsOnConveyors.TryGetValue(point, out Ore item);
+            _itemsOnConveyors.Remove(point);
+
+            // Move next item from queue to conveyor (if any)
+            ProcessConveyorQueue(x, y);
+
+            return item;
+        }
+
+        private void ProcessConveyorQueue(int x, int y)
+        {
+            var point = new Point(x, y);
+
+            // If conveyor is now empty and there's a queue, move next item to conveyor
+            if (!_itemsOnConveyors.ContainsKey(point) &&
+                _conveyorInputQueues.TryGetValue(point, out Queue<Ore> queue) &&
+                queue.Count > 0)
+            {
+                var nextItem = queue.Dequeue();
+                _itemsOnConveyors[point] = nextItem;
+
+                // Clean up empty queues
+                if (queue.Count == 0)
+                {
+                    _conveyorInputQueues.Remove(point);
+                }
+            }
+        }
+
+        public int GetQueueCount(int x, int y)
+        {
+            var point = new Point(x, y);
+            if (_conveyorInputQueues.TryGetValue(point, out Queue<Ore> queue))
+            {
+                return queue.Count;
+            }
+            return 0;
+        }
+
+        public void MoveItem(Point from, Point to, Ore item)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"MoveItem: Moving {item.Type} {item.State} from {from} to {to}");
+
+                // Remove item from source
+                var removedItem = RemoveItemFromConveyor(from.X, from.Y);
+                if (removedItem == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  No item found at source {from}");
+                    return;
+                }
+
+                var targetTile = GetTile(to.X, to.Y);
+                if (targetTile == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  Target tile at {to} is null, returning item to source");
+                    TryPlaceItemOnConveyor(from.X, from.Y, removedItem);
+                    return;
+                }
+
+                if (targetTile is Conveyor)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  Target is conveyor at {to}");
+                    // Try to place on target conveyor
+                    if (!TryPlaceItemOnConveyor(to.X, to.Y, removedItem))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  Failed to place on target conveyor, returning to source");
+                        TryPlaceItemOnConveyor(from.X, from.Y, removedItem);
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"  Successfully moved to conveyor at {to}");
+                    }
+                }
+                else if (targetTile is Machine machine)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  Target is {machine.Type} machine at {to}");
+                    if (machine.Type == MachineType.Assembler)
+                    {
+                        // Calculate the direction from which the item is coming
+                        Direction fromDirection = GetDirectionFromPoints(from, to);
+                        if (!machine.TryAcceptInput(removedItem, fromDirection))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"  Machine rejected {removedItem.Type}, returning to source");
+                            // Machine rejected the item, put it back on source conveyor
+                            TryPlaceItemOnConveyor(from.X, from.Y, removedItem);
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"  Machine accepted {removedItem.Type} from {fromDirection}");
+                        }
+                    }
+                    else
+                    {
+                        // Try to give the item directly to the machine
+                        if (!machine.TryAcceptInput(removedItem))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"  Machine rejected {removedItem.Type}, returning to source");
+                            // Machine rejected the item, put it back on source conveyor
+                            TryPlaceItemOnConveyor(from.X, from.Y, removedItem);
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"  Machine accepted {removedItem.Type}");
+                        }
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"  Unknown target type, returning to source");
+                    TryPlaceItemOnConveyor(from.X, from.Y, removedItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MoveItem exception: {ex.Message}");
+            }
+        }
+
+        private Direction GetDirectionFromPoints(Point from, Point to)
+        {
+            int deltaX = to.X - from.X;
+            int deltaY = to.Y - from.Y;
+
+            System.Diagnostics.Debug.WriteLine($"GetDirectionFromPoints: from={from}, to={to}, deltaX={deltaX}, deltaY={deltaY}");
+
+            Direction result;
+            if (deltaX > 0)
+            {
+                result = Direction.Left;  // Item moved left->right, so coming from Left
+                System.Diagnostics.Debug.WriteLine($"  -> deltaX > 0: returning Direction.Left");
+            }
+            else if (deltaX < 0)
+            {
+                result = Direction.Right; // Item moved right->left, so coming from Right
+                System.Diagnostics.Debug.WriteLine($"  -> deltaX < 0: returning Direction.Right");
+            }
+            else if (deltaY > 0)
+            {
+                result = Direction.Up;    // Item moved up->down, so coming from Up
+                System.Diagnostics.Debug.WriteLine($"  -> deltaY > 0: returning Direction.Up");
+            }
+            else if (deltaY < 0)
+            {
+                result = Direction.Down;  // Item moved down->up, so coming from Down
+                System.Diagnostics.Debug.WriteLine($"  -> deltaY < 0: returning Direction.Down");
+            }
+            else
+            {
+                result = Direction.Up; // Default
+                System.Diagnostics.Debug.WriteLine($"  -> Default: returning Direction.Up");
+            }
+
+            System.Diagnostics.Debug.WriteLine($"  -> Final result: {result}");
+            return result;
+        }
+
+        private void OutputProcessedItem(Machine machine, Ore item, Point position)
+        {
+            // Try to output in the machine's facing direction
+            Point outputPos = GetNextPosition(position, machine.Direction);
+
+            if (IsInBounds(outputPos.X, outputPos.Y))
+            {
+                var outputTile = GetTile(outputPos.X, outputPos.Y);
+                if (outputTile is Conveyor)
+                {
+                    // Use the new queue-based placement
+                    TryPlaceItemOnConveyor(outputPos.X, outputPos.Y, item);
+                }
+            }
+        }
+
+        private Point GetNextPosition(Point current, Direction direction)
+        {
+            return direction switch
+            {
+                Direction.Up => new Point(current.X, current.Y - 1),
+                Direction.Right => new Point(current.X + 1, current.Y),
+                Direction.Down => new Point(current.X, current.Y + 1),
+                Direction.Left => new Point(current.X - 1, current.Y),
+                _ => current
+            };
+        }
+
+        public IEnumerable<Point> GetAllConveyorPositions()
+        {
+            return _tiles.Where(kvp => kvp.Value is Conveyor).Select(kvp => kvp.Key);
+        }
+
+        public IEnumerable<Point> GetAllExtractorPositions()
+        {
+            return _tiles.Where(kvp => kvp.Value is Machine machine && machine.Type == MachineType.Extractor)
+                         .Select(kvp => kvp.Key);
+        }
+
+        public Ore GetUnderlyingOre(int x, int y)
+        {
+            _underlyingOres.TryGetValue(new Point(x, y), out Ore ore);
+            return ore;
+        }
+
+        public Ore CreateRawOre(OreType oreType)
+        {
+            return new Ore(oreType, OreState.Raw, _atlas, _scale);
         }
 
         private void HandleInput(GameTime gameTime)
@@ -216,8 +562,38 @@ namespace CarFactoryArchitect.Source
                 switch (tile)
                 {
                     case Conveyor conveyor:
-                        conveyor.Update(gameTime); // Use the new Update method
+                        conveyor.Update(gameTime);
                         break;
+                    case Machine machine:
+                        machine.Update(gameTime, _atlas, _scale);
+
+                        // Try to output processed items
+                        if (machine.HasOutput())
+                        {
+                            TryOutputMachineItem(machine, kvp.Key);
+                        }
+                        break;
+                }
+            }
+        }
+
+        private void TryOutputMachineItem(Machine machine, Point machinePos)
+        {
+            var outputItem = machine.TryExtractOutput();
+            if (outputItem != null)
+            {
+                Point outputPos = GetNextPosition(machinePos, machine.Direction);
+
+                if (IsInBounds(outputPos.X, outputPos.Y))
+                {
+                    var outputTile = GetTile(outputPos.X, outputPos.Y);
+                    if (outputTile is Conveyor)
+                    {
+                        if (!TryPlaceItemOnConveyor(outputPos.X, outputPos.Y, outputItem))
+                        {
+                            machine.OutputSlot = outputItem;
+                        }
+                    }
                 }
             }
         }
@@ -306,20 +682,39 @@ namespace CarFactoryArchitect.Source
             {
                 case Conveyor conveyor:
                     conveyor.Draw(spriteBatch, position);
+
+                    // Draw the single item on the conveyor
+                    var gridPos = new Point((int)(position.X / TileSize), (int)(position.Y / TileSize));
+                    var itemOnConveyor = GetItemOnConveyor(gridPos.X, gridPos.Y);
+
+                    if (itemOnConveyor != null)
+                    {
+                        // Center the item in the tile
+                        itemOnConveyor.OreSprite.Draw(spriteBatch, position);
+                    }
+
+                    // Draw queue indicator if there are items waiting
+                    int queueCount = GetQueueCount(gridPos.X, gridPos.Y);
+                    if (queueCount > 0)
+                    {
+                        // Draw a small indicator showing queue count
+                        for (int i = 0; i < Math.Min(queueCount, 3); i++)
+                        {
+                            Vector2 queueIndicatorPos = position + new Vector2(2 + i * 4, 2);
+                        }
+                    }
                     break;
+
                 case Machine machine:
-                    machine.MachineSprite.Draw(spriteBatch, position);
+                    machine.Draw(spriteBatch, position);
                     break;
                 case Ore ore:
                     ore.OreSprite.Draw(spriteBatch, position);
                     break;
-                case Seller seller:
-                    seller.SellPoint.Draw(spriteBatch, position);
-                    break;
             }
         }
 
-        // Helper method to place different types of tiles easily
+        // Helper methods to place different types of tiles easily
         public void PlaceConveyor(int x, int y, Conveyor conveyor)
         {
             PlaceTile(x, y, conveyor);
