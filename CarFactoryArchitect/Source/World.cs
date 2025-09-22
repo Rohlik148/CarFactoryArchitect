@@ -6,6 +6,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGameLibrary;
 using MonoGameLibrary.Graphics;
+using CarFactoryArchitect.Source.Machines;
+using CarFactoryArchitect.Source.Items;
 
 namespace CarFactoryArchitect.Source
 {
@@ -13,11 +15,11 @@ namespace CarFactoryArchitect.Source
     {
         // Tile storage
         private Dictionary<Point, object> _tiles;
-        private Dictionary<Point, Ore> _underlyingOres;
+        private Dictionary<Point, IItem> _underlyingOres;
 
         // Conveyors
-        private Dictionary<Point, Ore> _itemsOnConveyors;
-        private Dictionary<Point, Queue<Ore>> _conveyorInputQueues;
+        private Dictionary<Point, IItem> _itemsOnConveyors;
+        private Dictionary<Point, Queue<IItem>> _conveyorInputQueues;
         private const int MaxQueueSize = 0;
         private ConveyorSystem _conveyorSystem;
 
@@ -50,9 +52,9 @@ namespace CarFactoryArchitect.Source
             _scale = scale;
 
             _tiles = new Dictionary<Point, object>();
-            _underlyingOres = new Dictionary<Point, Ore>();
-            _itemsOnConveyors = new Dictionary<Point, Ore>();
-            _conveyorInputQueues = new Dictionary<Point, Queue<Ore>>(); // Queue for waiting items
+            _underlyingOres = new Dictionary<Point, IItem>();
+            _itemsOnConveyors = new Dictionary<Point, IItem>();
+            _conveyorInputQueues = new Dictionary<Point, Queue<IItem>>(); // Queue for waiting items
             _conveyorSystem = new ConveyorSystem(this);
 
             float worldWidth = GridSize * TileSize;
@@ -115,7 +117,7 @@ namespace CarFactoryArchitect.Source
             var existingTile = GetTile(x, y);
 
             // If there's an ore tile, store it as underlying ore
-            if (existingTile is Ore ore)
+            if (existingTile is IItem ore)
             {
                 _underlyingOres[point] = ore;
             }
@@ -132,7 +134,7 @@ namespace CarFactoryArchitect.Source
             var existingTile = GetTile(x, y);
 
             // Prevent deletion of ore tiles
-            if (existingTile is Ore ore && ore.State == OreState.Tile)
+            if (existingTile is IItem item && item.State == OreState.Tile)
             {
                 return;
             }
@@ -147,7 +149,7 @@ namespace CarFactoryArchitect.Source
             _tiles.Remove(point);
 
             // If there's an underlying ore, restore it
-            if (_underlyingOres.TryGetValue(point, out Ore underlyingOre))
+            if (_underlyingOres.TryGetValue(point, out IItem underlyingOre))
             {
                 _tiles[point] = underlyingOre;
                 _underlyingOres.Remove(point);
@@ -222,9 +224,9 @@ namespace CarFactoryArchitect.Source
             }
         }
 
-        public Ore GetItemOnConveyor(int x, int y)
+        public IItem GetItemOnConveyor(int x, int y)
         {
-            _itemsOnConveyors.TryGetValue(new Point(x, y), out Ore item);
+            _itemsOnConveyors.TryGetValue(new Point(x, y), out IItem item);
             return item;
         }
 
@@ -243,14 +245,14 @@ namespace CarFactoryArchitect.Source
 
             // If Queue exists
             var point = new Point(x, y);
-            if (_conveyorInputQueues.TryGetValue(point, out Queue<Ore> queue))
+            if (_conveyorInputQueues.TryGetValue(point, out Queue<IItem> queue))
             {
                 return queue.Count < MaxQueueSize;
             }
             return true;
         }
 
-        public bool TryPlaceItemOnConveyor(int x, int y, Ore item)
+        public bool TryPlaceItemOnConveyor(int x, int y, IItem item)
         {
             var point = new Point(x, y);
 
@@ -285,7 +287,7 @@ namespace CarFactoryArchitect.Source
             {
                 if (!_conveyorInputQueues.ContainsKey(point))
                 {
-                    _conveyorInputQueues[point] = new Queue<Ore>();
+                    _conveyorInputQueues[point] = new Queue<IItem>();
                 }
                 _conveyorInputQueues[point].Enqueue(item);
                 // System.Diagnostics.Debug.WriteLine($"Queued {item.Type} {item.State} for conveyor at ({x}, {y})");
@@ -295,17 +297,17 @@ namespace CarFactoryArchitect.Source
             return false;
         }
 
-        public void PlaceItemOnConveyor(int x, int y, Ore item)
+        public void PlaceItemOnConveyor(int x, int y, IItem item)
         {
             TryPlaceItemOnConveyor(x, y, item);
         }
 
-        public Ore RemoveItemFromConveyor(int x, int y)
+        public IItem RemoveItemFromConveyor(int x, int y)
         {
             var point = new Point(x, y);
 
             // Remove the item currently on the conveyor
-            _itemsOnConveyors.TryGetValue(point, out Ore item);
+            _itemsOnConveyors.TryGetValue(point, out IItem item);
             _itemsOnConveyors.Remove(point);
 
             // Move next item from queue to conveyor (if any)
@@ -320,7 +322,7 @@ namespace CarFactoryArchitect.Source
 
             // If conveyor is now empty and there's a queue, move next item to conveyor
             if (!_itemsOnConveyors.ContainsKey(point) &&
-                _conveyorInputQueues.TryGetValue(point, out Queue<Ore> queue) &&
+                _conveyorInputQueues.TryGetValue(point, out Queue<IItem> queue) &&
                 queue.Count > 0)
             {
                 var nextItem = queue.Dequeue();
@@ -337,14 +339,14 @@ namespace CarFactoryArchitect.Source
         public int GetQueueCount(int x, int y)
         {
             var point = new Point(x, y);
-            if (_conveyorInputQueues.TryGetValue(point, out Queue<Ore> queue))
+            if (_conveyorInputQueues.TryGetValue(point, out Queue<IItem> queue))
             {
                 return queue.Count;
             }
             return 0;
         }
 
-        public void MoveItem(Point from, Point to, Ore item)
+        public void MoveItem(Point from, Point to, IItem item)
         {
             try
             {
@@ -380,7 +382,7 @@ namespace CarFactoryArchitect.Source
                         System.Diagnostics.Debug.WriteLine($"  Successfully moved to conveyor at {to}");
                     }
                 }
-                else if (targetTile is Machine machine)
+                else if (targetTile is IMachine machine) // Changed from Machine to IMachine
                 {
                     System.Diagnostics.Debug.WriteLine($"  Target is {machine.Type} machine at {to}");
                     if (machine.Type == MachineType.Assembler)
@@ -463,7 +465,7 @@ namespace CarFactoryArchitect.Source
             return result;
         }
 
-        private void OutputProcessedItem(Machine machine, Ore item, Point position)
+        private void OutputProcessedItem(IMachine machine, IItem item, Point position)
         {
             // Try to output in the machine's facing direction
             Point outputPos = GetNextPosition(position, machine.Direction);
@@ -498,19 +500,19 @@ namespace CarFactoryArchitect.Source
 
         public IEnumerable<Point> GetAllExtractorPositions()
         {
-            return _tiles.Where(kvp => kvp.Value is Machine machine && machine.Type == MachineType.Extractor)
+            return _tiles.Where(kvp => kvp.Value is IMachine machine && machine.Type == MachineType.Extractor)
                          .Select(kvp => kvp.Key);
         }
 
-        public Ore GetUnderlyingOre(int x, int y)
+        public IItem GetUnderlyingOre(int x, int y)
         {
-            _underlyingOres.TryGetValue(new Point(x, y), out Ore ore);
+            _underlyingOres.TryGetValue(new Point(x, y), out IItem ore);
             return ore;
         }
 
-        public Ore CreateRawOre(OreType oreType)
+        public IItem CreateRawOre(OreType oreType)
         {
-            return new Ore(oreType, OreState.Raw, _atlas, _scale);
+            return ItemFactory.CreateRawMaterial(oreType, _atlas, _scale);
         }
 
         private void HandleInput(GameTime gameTime)
@@ -564,11 +566,11 @@ namespace CarFactoryArchitect.Source
                     case Conveyor conveyor:
                         conveyor.Update(gameTime);
                         break;
-                    case Machine machine:
+                    case IMachine machine: // Changed from Machine to IMachine
                         machine.Update(gameTime, _atlas, _scale);
 
                         // Try to output processed items
-                        if (machine.HasOutput())
+                        if (machine.HasOutput)
                         {
                             TryOutputMachineItem(machine, kvp.Key);
                         }
@@ -577,7 +579,7 @@ namespace CarFactoryArchitect.Source
             }
         }
 
-        private void TryOutputMachineItem(Machine machine, Point machinePos)
+        private void TryOutputMachineItem(IMachine machine, Point machinePos)
         {
             var outputItem = machine.TryExtractOutput();
             if (outputItem != null)
@@ -591,7 +593,8 @@ namespace CarFactoryArchitect.Source
                     {
                         if (!TryPlaceItemOnConveyor(outputPos.X, outputPos.Y, outputItem))
                         {
-                            machine.OutputSlot = outputItem;
+                            // Put the item back in the machine's output slot
+                            machine.SetOutputSlot(outputItem);
                         }
                     }
                 }
@@ -690,7 +693,7 @@ namespace CarFactoryArchitect.Source
                     if (itemOnConveyor != null)
                     {
                         // Center the item in the tile
-                        itemOnConveyor.OreSprite.Draw(spriteBatch, position);
+                        itemOnConveyor.ItemSprite.Draw(spriteBatch, position);
                     }
 
                     // Draw queue indicator if there are items waiting
@@ -705,11 +708,11 @@ namespace CarFactoryArchitect.Source
                     }
                     break;
 
-                case Machine machine:
+                case IMachine machine: // Changed from Machine to IMachine
                     machine.Draw(spriteBatch, position);
                     break;
-                case Ore ore:
-                    ore.OreSprite.Draw(spriteBatch, position);
+                case IItem item:
+                    item.ItemSprite.Draw(spriteBatch, position);
                     break;
             }
         }
@@ -720,14 +723,14 @@ namespace CarFactoryArchitect.Source
             PlaceTile(x, y, conveyor);
         }
 
-        public void PlaceMachine(int x, int y, Machine machine)
+        public void PlaceMachine(int x, int y, IMachine machine)
         {
             PlaceTile(x, y, machine);
         }
 
-        public void PlaceOre(int x, int y, Ore ore)
+        public void PlaceOre(int x, int y, IItem item)
         {
-            PlaceTile(x, y, ore);
+            PlaceTile(x, y, item);
         }
 
         public Rectangle GetGridBounds()

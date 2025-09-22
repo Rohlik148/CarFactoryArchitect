@@ -9,6 +9,7 @@ using MonoGameLibrary.Graphics;
 using MonoGameLibrary.Input;
 
 using CarFactoryArchitect.Source;
+using CarFactoryArchitect.Source.Items;
 
 namespace CarFactoryArchitect;
 
@@ -61,7 +62,7 @@ public class Game1 : Core
                 System.Diagnostics.Debug.WriteLine($"Existing tile: {existingTile?.GetType().Name}");
 
                 // Allow placement if tile is empty OR if it's an ore (which can be built on)
-                if (existingTile == null || existingTile is Ore)
+                if (existingTile == null || (existingTile is IItem item && item.State == OreState.Tile))
                 {
                     // Place tile based on UI selection
                     switch (_ui.CurrentBuildMode)
@@ -71,7 +72,6 @@ public class Game1 : Core
                             _world.PlaceConveyor(gridPos.X, gridPos.Y, conveyor);
                             break;
                         case BuildMode.Machine:
-                            var structure = _ui.CreateSelectedMachine();
                             var machine = _ui.CreateSelectedMachine();
                             _world.PlaceMachine(gridPos.X, gridPos.Y, machine);
                             break;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using MonoGameLibrary.Graphics;
+using CarFactoryArchitect.Source.Items;
 
 namespace CarFactoryArchitect.Source
 {
@@ -49,6 +50,7 @@ namespace CarFactoryArchitect.Source
         private static void CreateTileFromValue(int value, int x, int y, World world, TextureAtlas atlas, float scale)
         {
             TileType tileType = (TileType)value;
+            IItem item = null;
 
             switch (tileType)
             {
@@ -57,28 +59,29 @@ namespace CarFactoryArchitect.Source
                     break;
 
                 case TileType.IronOre:
-                    var ironOre = new Ore(OreType.Iron, OreState.Tile, atlas, scale);
-                    world.PlaceOre(x, y, ironOre);
+                    item = ItemFactory.CreateItem(OreType.Iron, OreState.Tile, atlas, scale);
                     break;
 
                 case TileType.CopperOre:
-                    var copperOre = new Ore(OreType.Copper, OreState.Tile, atlas, scale);
-                    world.PlaceOre(x, y, copperOre);
+                    item = ItemFactory.CreateItem(OreType.Copper, OreState.Tile, atlas, scale);
                     break;
 
                 case TileType.SandOre:
-                    var sandOre = new Ore(OreType.Sand, OreState.Tile, atlas, scale);
-                    world.PlaceOre(x, y, sandOre);
+                    item = ItemFactory.CreateItem(OreType.Sand, OreState.Tile, atlas, scale);
                     break;
 
                 case TileType.RubberOre:
-                    var rubberOre = new Ore(OreType.Rubber, OreState.Tile, atlas, scale);
-                    world.PlaceOre(x, y, rubberOre);
+                    item = ItemFactory.CreateItem(OreType.Rubber, OreState.Tile, atlas, scale);
                     break;
 
                 default:
                     Console.WriteLine($"Unknown tile type: {value} at position ({x}, {y})");
                     break;
+            }
+
+            if (item != null)
+            {
+                world.PlaceOre(x, y, item);
             }
         }
 
@@ -118,7 +121,7 @@ namespace CarFactoryArchitect.Source
         {
             return tile switch
             {
-                Ore ore => ore.Type switch
+                IItem item => item.Type switch
                 {
                     OreType.Iron => (int)TileType.IronOre,
                     OreType.Copper => (int)TileType.CopperOre,

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CarFactoryArchitect.Source.Machines;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -248,7 +249,7 @@ namespace CarFactoryArchitect.Source
             // Draw current machine sprite
             try
             {
-                var machine = new Machine(SelectedMachineType, MachineDirection, _atlas, _scale * 0.8f);
+                var machine = MachineFactory.CreateMachine(SelectedMachineType, MachineDirection, _atlas, _scale * 0.8f);
 
                 Vector2 spritePos = new Vector2(
                     x + IndicatorSize / 2 - machine.MachineSprite.Width / 2,
@@ -293,9 +294,9 @@ namespace CarFactoryArchitect.Source
             return new Conveyor(_atlas, ConveyorDirection, _scale);
         }
 
-        public Machine CreateSelectedMachine()
+        public IMachine CreateSelectedMachine()
         {
-            return new Machine(SelectedMachineType, MachineDirection, _atlas, _scale);
+            return MachineFactory.CreateMachine(SelectedMachineType, MachineDirection, _atlas, _scale);
         }
     }
 }

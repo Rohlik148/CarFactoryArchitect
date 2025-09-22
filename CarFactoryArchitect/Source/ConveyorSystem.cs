@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using CarFactoryArchitect.Source.Machines;
+using CarFactoryArchitect.Source.Items;
 
 namespace CarFactoryArchitect.Source;
 public class ConveyorSystem
@@ -41,7 +43,7 @@ public class ConveyorSystem
     {
         foreach (var position in _world.GetAllExtractorPositions())
         {
-            var extractor = _world.GetTile(position.X, position.Y) as Machine;
+            var extractor = _world.GetTile(position.X, position.Y) as IMachine;
 
             if (extractor != null && extractor.Type == MachineType.Extractor)
             {
@@ -67,7 +69,7 @@ public class ConveyorSystem
 
     private void ProcessConveyorMovement()
     {
-        var potentialMoves = new List<(Point from, Point to, Ore item)>();
+        var potentialMoves = new List<(Point from, Point to, IItem item)>();
 
         // Collect all potential moves first
         foreach (var position in _world.GetAllConveyorPositions())
@@ -86,7 +88,7 @@ public class ConveyorSystem
             }
         }
 
-        var executedMoves = new List<(Point from, Point to, Ore item)>();
+        var executedMoves = new List<(Point from, Point to, IItem item)>();
         var movesByTarget = potentialMoves.GroupBy(move => move.to).ToList();
 
         // Process moves grouped by target position to handle conflicts
@@ -121,7 +123,7 @@ public class ConveyorSystem
                 {
                     HandleConveyorConflict(targetPos, movesToTarget, executedMoves);
                 }
-                else if (targetTile is Machine machine)
+                else if (targetTile is IMachine machine)
                 {
                     HandleMachineConflict(machine, movesToTarget, executedMoves);
                 }
@@ -144,7 +146,7 @@ public class ConveyorSystem
         }
     }
 
-    private bool ExecuteMoveWithValidation(Point from, Point to, Ore item)
+    private bool ExecuteMoveWithValidation(Point from, Point to, IItem item)
     {
         // Final validation before executing the move
         var sourceItem = _world.GetItemOnConveyor(from.X, from.Y);
@@ -174,7 +176,7 @@ public class ConveyorSystem
         }
     }
 
-    private void HandleConveyorConflict(Point targetPos, List<(Point from, Point to, Ore item)> movesToTarget, List<(Point from, Point to, Ore item)> executedMoves)
+    private void HandleConveyorConflict(Point targetPos, List<(Point from, Point to, IItem item)> movesToTarget, List<(Point from, Point to, IItem item)> executedMoves)
     {
         // Check if target conveyor has space
         if (_world.HasSpaceOnConveyor(targetPos.X, targetPos.Y))
@@ -196,7 +198,7 @@ public class ConveyorSystem
         }
     }
 
-    private void HandleMachineConflict(Machine machine, List<(Point from, Point to, Ore item)> movesToTarget, List<(Point from, Point to, Ore item)> executedMoves)
+    private void HandleMachineConflict(IMachine machine, List<(Point from, Point to, IItem item)> movesToTarget, List<(Point from, Point to, IItem item)> executedMoves)
     {
         // Find all items that the machine can accept
         var acceptableMoves = movesToTarget.Where(move => CanMachineAcceptItem(machine, move.item)).ToList();
@@ -212,12 +214,12 @@ public class ConveyorSystem
         }
     }
 
-    private (Point from, Point to, Ore item) SelectMachineMove(List<(Point from, Point to, Ore item)> acceptableMoves)
+    private (Point from, Point to, IItem item) SelectMachineMove(List<(Point from, Point to, IItem item)> acceptableMoves)
     {
         return acceptableMoves.First();
     }
 
-    private bool ValidateMoveRobust(Point from, Point to, Ore item)
+    private bool ValidateMoveRobust(Point from, Point to, IItem item)
     {
         try
         {
@@ -250,13 +252,13 @@ public class ConveyorSystem
         }
     }
 
-    private bool AreSameItem(Ore item1, Ore item2)
+    private bool AreSameItem(IItem item1, IItem item2)
     {
         if (item1 == null || item2 == null) return false;
         return item1.Type == item2.Type && item1.State == item2.State;
     }
 
-    private (Point from, Point to, Ore item) SelectMoveWithPriority(List<(Point from, Point to, Ore item)> conflictingMoves)
+    private (Point from, Point to, IItem item) SelectMoveWithPriority(List<(Point from, Point to, IItem item)> conflictingMoves)
     {
         var priorityOrder = conflictingMoves.OrderBy(move =>
         {
@@ -282,7 +284,7 @@ public class ConveyorSystem
         };
     }
 
-    private bool CanMoveToPosition(Point position, Ore item)
+    private bool CanMoveToPosition(Point position, IItem item)
     {
         if (!_world.IsInBounds(position.X, position.Y))
             return false;
@@ -295,13 +297,13 @@ public class ConveyorSystem
                 _world.HasSpaceOnConveyor(position.X, position.Y) ||
                 (_world.GetItemOnConveyor(position.X, position.Y) != null && _world.HasSpaceInQueue(position.X, position.Y)),
 
-            Machine machine => CanMachineAcceptItem(machine, item),
+            IMachine machine => CanMachineAcceptItem(machine, item),
             null => false,
             _ => false
         };
     }
 
-    private bool CanMachineAcceptItem(Machine machine, Ore item)
+    private bool CanMachineAcceptItem(IMachine machine, IItem item)
     {
         if (machine == null || item == null) return false;
 
