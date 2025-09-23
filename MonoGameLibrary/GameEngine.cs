@@ -7,14 +7,14 @@ using MonoGameLibrary.Input;
 
 namespace MonoGameLibrary;
 
-public class Core : Game
+public class GameEngine : Game
 {
-    internal static Core s_instance;
+    internal static GameEngine s_instance;
 
     /// <summary>
     /// Gets a reference to the Core instance.
     /// </summary>
-    public static Core Instance => s_instance;
+    public static GameEngine Instance => s_instance;
 
     /// <summary>
     /// Gets the graphics device manager to control the presentation of graphics.
@@ -53,7 +53,7 @@ public class Core : Game
     /// <param name="width">The initial width, in pixels, of the game window.</param>
     /// <param name="height">The initial height, in pixels, of the game window.</param>
     /// <param name="fullScreen">Indicates if the game should start in fullscreen mode.</param>
-    public Core(string title, int width, int height, bool fullScreen)
+    public GameEngine(string title, int width, int height, bool fullScreen)
     {
         // Ensure that multiple cores are not created.
         if (s_instance != null)

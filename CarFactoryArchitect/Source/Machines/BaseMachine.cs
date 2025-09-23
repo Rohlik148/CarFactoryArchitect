@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using MonoGameLibrary.Graphics;
 using CarFactoryArchitect.Source.Items;
+using CarFactoryArchitect.Source.Core;
 
 namespace CarFactoryArchitect.Source.Machines
 {
@@ -40,7 +41,6 @@ namespace CarFactoryArchitect.Source.Machines
 
         public abstract bool CanAcceptInput(IItem item);
 
-        // Direction-aware version - default implementation checks direction
         public virtual bool CanAcceptInput(IItem item, Direction fromDirection)
         {
             // Can't accept input from output direction
@@ -52,7 +52,6 @@ namespace CarFactoryArchitect.Source.Machines
 
         public abstract bool TryAcceptInput(IItem item);
 
-        // Direction-aware version - default implementation uses basic version
         public virtual bool TryAcceptInput(IItem item, Direction fromDirection)
         {
             if (!CanAcceptInput(item, fromDirection))

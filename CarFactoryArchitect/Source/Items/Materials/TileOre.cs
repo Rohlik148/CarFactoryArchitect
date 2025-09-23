@@ -1,6 +1,7 @@
 ﻿using MonoGameLibrary.Graphics;
+using CarFactoryArchitect.Source.Core;
 
-namespace CarFactoryArchitect.Source.Items
+namespace CarFactoryArchitect.Source.Items.Materials
 {
     public class TileOre : BaseItem
     {

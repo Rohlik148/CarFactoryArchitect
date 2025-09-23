@@ -1,5 +1,6 @@
 ﻿using MonoGameLibrary.Graphics;
 using System;
+using CarFactoryArchitect.Source.Core;
 
 namespace CarFactoryArchitect.Source.Items.Products
 {

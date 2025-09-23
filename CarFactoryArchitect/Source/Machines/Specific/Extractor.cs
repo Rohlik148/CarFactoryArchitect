@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoGameLibrary.Graphics;
-using CarFactoryArchitect.Source.Items; 
+using CarFactoryArchitect.Source.Items;
+using CarFactoryArchitect.Source.Core;
 
 namespace CarFactoryArchitect.Source.Machines
 {

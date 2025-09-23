@@ -2,6 +2,7 @@
 using MonoGameLibrary.Graphics;
 using CarFactoryArchitect.Source.Items.Materials;
 using CarFactoryArchitect.Source.Items.Products;
+using CarFactoryArchitect.Source.Core;
 
 namespace CarFactoryArchitect.Source.Items
 {
@@ -14,8 +15,8 @@ namespace CarFactoryArchitect.Source.Items
                 OreState.Tile => new TileOre(oreType, atlas, scale),
                 OreState.Raw => new RawMaterial(oreType, atlas, scale),
                 OreState.Smelted => new SmeltedMaterial(oreType, atlas, scale),
-                OreState.Plate => new ForgedMaterial(oreType, atlas, scale),      // New
-                OreState.Wire => new CutMaterial(oreType, atlas, scale),         // New
+                OreState.Plate => new ForgedMaterial(oreType, atlas, scale),
+                OreState.Wire => new CutMaterial(oreType, atlas, scale),
                 OreState.Manufactured => new ManufacturedProduct(oreType, atlas, scale),
                 _ => throw new ArgumentException($"Unknown ore state: {oreState}")
             };
@@ -36,7 +37,6 @@ namespace CarFactoryArchitect.Source.Items
             return new ManufacturedProduct(productType, atlas, scale);
         }
 
-        // New specific factory methods
         public static IItem CreateForgedMaterial(OreType materialType, TextureAtlas atlas, float scale)
         {
             return new ForgedMaterial(materialType, atlas, scale);
@@ -47,7 +47,6 @@ namespace CarFactoryArchitect.Source.Items
             return new CutMaterial(materialType, atlas, scale);
         }
 
-        // Validation method to check if a combination is valid
         public static bool IsValidCombination(OreType oreType, OreState oreState)
         {
             return oreState switch
@@ -55,8 +54,8 @@ namespace CarFactoryArchitect.Source.Items
                 OreState.Tile => oreType is OreType.Iron or OreType.Copper or OreType.Sand or OreType.Rubber,
                 OreState.Raw => oreType is OreType.Iron or OreType.Copper or OreType.Sand or OreType.Rubber,
                 OreState.Smelted => oreType is OreType.Iron or OreType.Copper or OreType.Sand,
-                OreState.Plate => oreType == OreType.Iron,          // Only Iron can be forged
-                OreState.Wire => oreType == OreType.Copper,         // Only Copper can be cut
+                OreState.Plate => oreType == OreType.Iron,
+                OreState.Wire => oreType == OreType.Copper,
                 OreState.Manufactured => oreType is OreType.Chassis or OreType.ECU or OreType.Wheel or OreType.Engine or OreType.Car,
                 _ => false
             };

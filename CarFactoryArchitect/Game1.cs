@@ -1,25 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-using MonoGame.OpenGL;
 using MonoGameLibrary;
 using MonoGameLibrary.Graphics;
-using MonoGameLibrary.Input;
 
 using CarFactoryArchitect.Source;
-using CarFactoryArchitect.Source.Items;
+using CarFactoryArchitect.Source.Controls;
+using CarFactoryArchitect.Source.UI;
+using CarFactoryArchitect.Source.Maps;
 
 namespace CarFactoryArchitect;
 
-public class Game1 : Core
+public class Game1 : GameEngine
 {
     private World _world;
-    private UI _ui;
+    private UIManager _ui;
     private TextureAtlas _atlas;
+    private GameInputManager _inputManager;
 
-    private const Single SizeScale = 3.0f;
+    private const float SizeScale = 3.0f;
 
     public Game1() : base("Car Factory Architect", 1280, 720, false)
     {
@@ -38,57 +37,19 @@ public class Game1 : Core
         _world = new World(_atlas, SizeScale);
         _world.Initialize(GraphicsDevice);
 
-        _ui = new UI(_atlas, _world, SizeScale);
+        _ui = new UIManager(_atlas, _world, SizeScale);
         _ui.Initialize(GraphicsDevice);
+
+        _inputManager = new GameInputManager(_world, _ui.BuildPanel, _atlas, SizeScale);
 
         MapLoader.LoadMap("level1.txt", _world, _atlas, SizeScale);
     }
 
     protected override void Update(GameTime gameTime)
     {
+        _inputManager.Update(gameTime);
         _world.Update(gameTime);
         _ui.Update(gameTime);
-
-        // Handle tile placement with bounds checking
-        if (Input.Mouse.WasButtonJustPressed(MouseButton.Left))
-        {
-            Point gridPos = _world.ScreenToGrid(new Vector2(Input.Mouse.X, Input.Mouse.Y));
-
-            // Check if the position is within grid bounds
-            if (_world.IsInBounds(gridPos.X, gridPos.Y))
-            {
-                // Check if the tile is already occupied
-                var existingTile = _world.GetTile(gridPos.X, gridPos.Y);
-                System.Diagnostics.Debug.WriteLine($"Existing tile: {existingTile?.GetType().Name}");
-
-                // Allow placement if tile is empty OR if it's an ore (which can be built on)
-                if (existingTile == null || (existingTile is IItem item && item.State == OreState.Tile))
-                {
-                    // Place tile based on UI selection
-                    switch (_ui.CurrentBuildMode)
-                    {
-                        case BuildMode.Conveyor:
-                            var conveyor = _ui.CreateSelectedConveyor();
-                            _world.PlaceConveyor(gridPos.X, gridPos.Y, conveyor);
-                            break;
-                        case BuildMode.Machine:
-                            var machine = _ui.CreateSelectedMachine();
-                            _world.PlaceMachine(gridPos.X, gridPos.Y, machine);
-                            break;
-                    }
-                }
-            }
-        }
-
-        // Handle tile deletion on right-click
-        if (Input.Mouse.WasButtonJustPressed(MouseButton.Right))
-        {
-            Point gridPos = _world.ScreenToGrid(new Vector2(Input.Mouse.X, Input.Mouse.Y));
-            if (_world.IsInBounds(gridPos.X, gridPos.Y))
-            {
-                _world.RemoveTile(gridPos.X, gridPos.Y);
-            }
-        }
 
         base.Update(gameTime);
     }

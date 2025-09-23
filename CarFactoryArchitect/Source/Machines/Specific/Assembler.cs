@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Xna.Framework;
 using MonoGameLibrary.Graphics;
 using CarFactoryArchitect.Source.Items;
+using CarFactoryArchitect.Source.Core;
+using CarFactoryArchitect.Source.Recipes;
 
 namespace CarFactoryArchitect.Source.Machines
 {
@@ -24,12 +25,11 @@ namespace CarFactoryArchitect.Source.Machines
 
         protected override void SetProcessingDuration()
         {
-            ProcessingDuration = 4.0f; // Default, will be overridden by recipe
+            ProcessingDuration = 4.0f; // Default, later overriden by a recipe
         }
 
         public override bool CanAcceptInput(IItem item)
         {
-            // Basic version - always use direction-specific version for assembler
             return false;
         }
 
@@ -41,12 +41,17 @@ namespace CarFactoryArchitect.Source.Machines
             if (InputSlots.Count >= 3 || !RecipeManager.CouldBePartOfRecipe(item.Type, item.State))
                 return false;
 
-            return !InputSlots.Values.Any(ore => ore.Type == item.Type && ore.State == item.State);
+            if (InputSlots.Values.Any(ore => ore.Type == item.Type && ore.State == item.State))
+                return false;
+
+            if (InputSlots.ContainsKey(fromDirection))
+                return false;
+
+            return true;
         }
 
         public override bool TryAcceptInput(IItem item)
         {
-            // Basic version - always use direction-specific version for assembler
             return false;
         }
 
@@ -83,7 +88,6 @@ namespace CarFactoryArchitect.Source.Machines
             {
                 OutputSlot = ItemFactory.CreateManufacturedProduct(CurrentRecipe.Output.type, atlas, scale);
 
-                // Remove used inputs
                 var usedInputs = new List<(OreType, OreState)>(CurrentRecipe.Inputs);
                 var slotsToRemove = new List<Direction>();
 
